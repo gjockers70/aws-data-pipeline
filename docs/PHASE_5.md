@@ -157,13 +157,27 @@ On August 11, 2026, Terraform updated the existing DEV resources in place:
 - configured the existing Glue job with its quality-result S3 path.
 
 The apply added no resources, destroyed no resources, and did not start a Glue run. Live quality
-validation remains a separate cost-controlled checkpoint.
+validation was handled as a separate cost-controlled checkpoint.
 
 The first live validation attempt reached the quality-result write but failed because Glue's
 Botocore model rejected the newer typed `IfNoneMatch` argument before sending the S3 request. The
 writer now applies the same create-only condition as an HTTP header during request signing. The
 failed attempt used 228 DPU-seconds. A separate denied `cloudwatch:PutMetricData` message was
 non-fatal and is retained for the Phase 7 monitoring and IAM work.
+
+The corrected live run `jr_31b698bc46e8f052dfe7ad40c1088f5f12efb8591b4ca9d3a4d594da40a524e5`
+succeeded in 100 seconds and used 201 DPU-seconds. Its persisted quality result reported:
+
+- overall status `PASS`;
+- 66 processed rows, zero rejected rows, and an expected count of 66;
+- zero null, duplicate, invalid-type, missing-column, invalid-enum, and schema-drift failures;
+- eight passing rule results with zero failures;
+- 66 Parquet files across yearly partitions from 1960 through 2025;
+- an AES-256-encrypted, versioned JSON quality result.
+
+Spark created one zero-byte JSON placeholder in the rejected run prefix; it contains no rejected
+record. At USD 0.44 per DPU-hour, the failed and successful validation attempts used approximately
+USD 0.0279 and USD 0.0246 of Glue compute respectively, or approximately USD 0.0524 total.
 
 ## Enterprise differences
 
