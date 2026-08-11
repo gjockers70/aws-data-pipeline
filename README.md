@@ -44,9 +44,20 @@ Phase 3 adds the first AWS data layer:
 - an end-to-end live run that persisted 66 records across three raw source pages;
 - a verified replay that skipped the API and created no duplicate raw versions.
 
+Phase 4 adds the transformation boundary:
+
+- a Glue 5.0-compatible PySpark 3.5.4 transformation;
+- whole-document parsing for the World Bank API's nested JSON response shape;
+- explicit flattening, type casting, required-field validation, and schema-drift flags;
+- deterministic deduplication on country, indicator, and observation year;
+- separate processed Parquet and rejected JSON outputs;
+- immutable output paths scoped to the Glue job run ID;
+- a locally tested transformation library and reproducible Glue artifact build;
+- an idle, least-privilege Glue job definition that is never scheduled automatically.
+
 ## Local setup
 
-Python 3.11 or newer is required.
+Python 3.11 is used locally to match AWS Glue 5.0. Local Spark tests also require Java 17.
 
 ```powershell
 python -m venv .venv
@@ -75,3 +86,6 @@ least-privilege IAM design, Terraform resources, deployment evidence, and cleanu
 
 See [`docs/PHASE_3.md`](docs/PHASE_3.md) for the S3 key layout, encryption and immutability
 boundaries, replay behavior, least-privilege policy, deployment evidence, and cost calculation.
+
+See [`docs/PHASE_4.md`](docs/PHASE_4.md) for the PySpark transformations, rejection rules,
+Glue Visual ETL mapping, local validation, deployment boundary, and per-run cost gate.
