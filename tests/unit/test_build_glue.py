@@ -16,6 +16,11 @@ def test_glue_library_build_is_deterministic():
     assert first_hash == second_hash
     with zipfile.ZipFile(second_archive) as archive:
         assert archive.namelist() == [
+            "data_quality/__init__.py",
+            "data_quality/evaluator.py",
+            "data_quality/models.py",
+            "data_quality/s3_writer.py",
+            "data_quality/world_bank.py",
             "transformations/__init__.py",
             "transformations/world_bank.py",
         ]

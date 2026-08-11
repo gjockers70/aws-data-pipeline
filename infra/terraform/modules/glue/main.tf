@@ -85,6 +85,7 @@ data "aws_iam_policy_document" "s3_access" {
     ]
     resources = [
       "${var.bucket_arn}/processed/world_bank/*",
+      "${var.bucket_arn}/quality/world_bank/*",
       "${var.bucket_arn}/rejected/world_bank/*",
     ]
   }
@@ -118,7 +119,7 @@ resource "aws_iam_role_policy" "logging" {
 
 resource "aws_glue_job" "world_bank" {
   name              = var.job_name
-  description       = "Normalizes raw World Bank JSON into partitioned Parquet."
+  description       = "Validates and normalizes World Bank JSON into partitioned Parquet."
   role_arn          = aws_iam_role.job.arn
   glue_version      = "5.0"
   worker_type       = "G.1X"
@@ -137,6 +138,7 @@ resource "aws_glue_job" "world_bank" {
     "--ENVIRONMENT"                      = var.environment
     "--SOURCE_PATH"                      = "s3://${var.bucket_name}/landing/world_bank/"
     "--PROCESSED_BASE_PATH"              = "s3://${var.bucket_name}/processed/world_bank/"
+    "--QUALITY_BASE_PATH"                = "s3://${var.bucket_name}/quality/world_bank/"
     "--REJECTED_BASE_PATH"               = "s3://${var.bucket_name}/rejected/world_bank/"
     "--extra-py-files"                   = "s3://${var.bucket_name}/${aws_s3_object.transformation_library.key}"
     "--enable-continuous-cloudwatch-log" = "true"

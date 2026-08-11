@@ -56,6 +56,15 @@ Phase 4 adds the transformation boundary:
 - an unscheduled Glue job with object access restricted to required S3 prefixes;
 - a successful live transformation of 66 observations into 66 yearly Parquet partitions.
 
+Phase 5 adds a reusable data-quality gate:
+
+- required-column and Spark-type validation;
+- required-value, business-key duplicate, enum, and schema-drift checks;
+- processed-plus-rejected row reconciliation against source metadata;
+- one immutable JSON result per Glue run;
+- fail-closed behavior that prevents processed output when quality fails;
+- encrypted quality results under a dedicated S3 prefix.
+
 ## Local setup
 
 Python 3.11 is used locally to match AWS Glue 5.0. Local Spark tests also require Java 17.
@@ -90,3 +99,6 @@ boundaries, replay behavior, least-privilege policy, deployment evidence, and co
 
 See [`docs/PHASE_4.md`](docs/PHASE_4.md) for the PySpark transformations, rejection rules,
 Glue Visual ETL mapping, local validation, deployment boundary, and per-run cost gate.
+
+See [`docs/PHASE_5.md`](docs/PHASE_5.md) for the quality-result contract, rule behavior,
+failure policy, S3 output, row reconciliation, and replay boundary.
