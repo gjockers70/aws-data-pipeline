@@ -22,7 +22,17 @@ Phase 1 currently provides a local ingestion flow that:
 - emits structured JSON logs without credentials;
 - runs without AWS credentials or AWS charges.
 
-AWS services and infrastructure remain intentionally deferred to later review checkpoints.
+Phase 2 deploys the tested ingestion logic to a minimal AWS DEV environment. It provides:
+
+- a Python 3.12 Lambda handler with a strict event contract;
+- reproducible ZIP packaging;
+- Terraform-managed Lambda, execution role, logs-only policy, and CloudWatch log group;
+- browser-based temporary AWS CLI credentials instead of access keys;
+- a live smoke test that validated 66 records across three World Bank API pages;
+- structured CloudWatch logs for the run and each validated page.
+
+The Lambda has no scheduler, public URL, or event source and therefore runs only when manually
+invoked. S3 landing remains explicitly deferred to Phase 3.
 
 ## Local setup
 
@@ -49,3 +59,6 @@ local_data/landing/world_bank/year=YYYY/month=MM/day=DD/run_id=RUN_ID/
 
 See [`docs/PHASE_1.md`](docs/PHASE_1.md) for the run manifest, replay procedure,
 configuration, validation boundary, and known local limitations.
+
+See [`docs/PHASE_2.md`](docs/PHASE_2.md) for the Lambda event contract, packaging process,
+least-privilege IAM design, Terraform resources, deployment evidence, and cleanup procedure.
