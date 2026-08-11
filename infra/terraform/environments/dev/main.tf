@@ -25,3 +25,20 @@ module "ingestion_lambda" {
     Component = "ingestion"
   }
 }
+
+module "world_bank_glue" {
+  source = "../../modules/glue"
+
+  job_name              = "aws-data-pipeline-dev-world-bank-transform"
+  environment           = "dev"
+  bucket_name           = module.landing_bucket.bucket_name
+  bucket_arn            = module.landing_bucket.bucket_arn
+  script_artifact_path  = var.glue_script_artifact_path
+  library_artifact_path = var.glue_library_artifact_path
+  log_retention_days    = 14
+
+  tags = {
+    Component   = "transformation"
+    Environment = "dev"
+  }
+}

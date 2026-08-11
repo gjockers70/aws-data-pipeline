@@ -85,8 +85,8 @@ resource "aws_lambda_function" "ingestion" {
   filename         = var.artifact_path
   source_code_hash = filebase64sha256(var.artifact_path)
 
-  memory_size                    = 256
-  timeout                        = 60
+  memory_size = 256
+  timeout     = 60
 
   environment {
     variables = {

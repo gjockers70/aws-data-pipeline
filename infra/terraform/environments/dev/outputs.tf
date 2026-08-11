@@ -17,3 +17,11 @@ output "lambda_log_group_name" {
 output "landing_bucket_name" {
   value = module.landing_bucket.bucket_name
 }
+
+output "glue_job_name" {
+  value = module.world_bank_glue.job_name
+}
+
+output "glue_execution_role_arn" {
+  value = module.world_bank_glue.execution_role_arn
+}
