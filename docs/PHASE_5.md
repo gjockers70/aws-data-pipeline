@@ -30,6 +30,8 @@ s3://<dev-landing-bucket>/quality/world_bank/run_id=<glue-job-run-id>/result.jso
 
 The writer sends `If-None-Match: *`, so the application cannot replace a result at the same key.
 S3 bucket versioning and AES-256 server-side encryption remain enabled as additional controls.
+The header is attached during Botocore request signing because the Botocore service model bundled
+with Glue 5.0 predates the typed `IfNoneMatch` parameter for `PutObject`.
 
 ## AWS and Spark concepts
 
@@ -156,6 +158,12 @@ On August 11, 2026, Terraform updated the existing DEV resources in place:
 
 The apply added no resources, destroyed no resources, and did not start a Glue run. Live quality
 validation remains a separate cost-controlled checkpoint.
+
+The first live validation attempt reached the quality-result write but failed because Glue's
+Botocore model rejected the newer typed `IfNoneMatch` argument before sending the S3 request. The
+writer now applies the same create-only condition as an HTTP header during request signing. The
+failed attempt used 228 DPU-seconds. A separate denied `cloudwatch:PutMetricData` message was
+non-fatal and is retained for the Phase 7 monitoring and IAM work.
 
 ## Enterprise differences
 

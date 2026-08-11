@@ -32,6 +32,7 @@ def _result() -> DataQualityResult:
 
 def test_writes_encrypted_json_result_without_credentials():
     client = Mock()
+    client.meta.events = Mock()
 
     write_data_quality_result(
         _result(),
@@ -43,10 +44,17 @@ def test_writes_encrypted_json_result_without_credentials():
     assert request["Bucket"] == "example.test"
     assert request["Key"].endswith("/result.json")
     assert request["ServerSideEncryption"] == "AES256"
-    assert request["IfNoneMatch"] == "*"
+    assert "IfNoneMatch" not in request
     assert request["ContentType"] == "application/json"
     assert request["Metadata"]["status"] == "PASS"
     assert json.loads(request["Body"])["row_count"] == 2
+
+    registration = client.meta.events.register_first.call_args
+    assert registration.args[0] == "before-sign.s3.PutObject"
+    assert registration.kwargs["unique_id"] == "data-quality-create-only"
+    request_to_sign = Mock(headers={})
+    registration.args[1](request_to_sign)
+    assert request_to_sign.headers["If-None-Match"] == "*"
 
 
 @pytest.mark.parametrize("uri", ["", "https://example.test/result.json", "s3://bucket-only"])
