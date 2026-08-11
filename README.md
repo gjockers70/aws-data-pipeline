@@ -32,7 +32,17 @@ Phase 2 deploys the tested ingestion logic to a minimal AWS DEV environment. It 
 - structured CloudWatch logs for the run and each validated page.
 
 The Lambda has no scheduler, public URL, or event source and therefore runs only when manually
-invoked. S3 landing remains explicitly deferred to Phase 3.
+invoked.
+
+Phase 3 adds the first AWS data layer:
+
+- private S3 landing storage with all public access blocked;
+- bucket-owner enforcement, versioning, TLS-only access, and AES-256 server-side encryption;
+- immutable raw-page keys partitioned by ingestion date and run ID;
+- versioned run manifests for checkpoints, recovery, and replay;
+- Lambda permissions restricted to the World Bank landing and manifest prefixes;
+- an end-to-end live run that persisted 66 records across three raw source pages;
+- a verified replay that skipped the API and created no duplicate raw versions.
 
 ## Local setup
 
@@ -62,3 +72,6 @@ configuration, validation boundary, and known local limitations.
 
 See [`docs/PHASE_2.md`](docs/PHASE_2.md) for the Lambda event contract, packaging process,
 least-privilege IAM design, Terraform resources, deployment evidence, and cleanup procedure.
+
+See [`docs/PHASE_3.md`](docs/PHASE_3.md) for the S3 key layout, encryption and immutability
+boundaries, replay behavior, least-privilege policy, deployment evidence, and cost calculation.

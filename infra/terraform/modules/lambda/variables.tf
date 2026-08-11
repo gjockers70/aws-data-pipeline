@@ -19,6 +19,16 @@ variable "log_retention_days" {
   default     = 14
 }
 
+variable "landing_bucket_name" {
+  description = "Name of the S3 bucket receiving raw pages and manifests."
+  type        = string
+}
+
+variable "landing_bucket_arn" {
+  description = "ARN of the S3 bucket receiving raw pages and manifests."
+  type        = string
+}
+
 variable "tags" {
   description = "Tags applied to supported resources."
   type        = map(string)

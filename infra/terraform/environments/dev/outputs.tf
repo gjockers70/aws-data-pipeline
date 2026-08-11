@@ -13,3 +13,7 @@ output "lambda_execution_role_arn" {
 output "lambda_log_group_name" {
   value = module.ingestion_lambda.log_group_name
 }
+
+output "landing_bucket_name" {
+  value = module.landing_bucket.bucket_name
+}

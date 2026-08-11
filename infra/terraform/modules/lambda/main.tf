@@ -40,6 +40,40 @@ resource "aws_iam_role_policy" "lambda_logs" {
   policy = data.aws_iam_policy_document.lambda_logs.json
 }
 
+data "aws_iam_policy_document" "lambda_landing" {
+  statement {
+    sid       = "CheckManifestExistence"
+    effect    = "Allow"
+    actions   = ["s3:ListBucket"]
+    resources = [var.landing_bucket_arn]
+
+    condition {
+      test     = "StringLike"
+      variable = "s3:prefix"
+      values   = ["manifests/world_bank/*"]
+    }
+  }
+
+  statement {
+    sid    = "ReadWriteLandingObjects"
+    effect = "Allow"
+    actions = [
+      "s3:GetObject",
+      "s3:PutObject",
+    ]
+    resources = [
+      "${var.landing_bucket_arn}/landing/world_bank/*",
+      "${var.landing_bucket_arn}/manifests/world_bank/*",
+    ]
+  }
+}
+
+resource "aws_iam_role_policy" "lambda_landing" {
+  name   = "read-write-landing-objects"
+  role   = aws_iam_role.ingestion.id
+  policy = data.aws_iam_policy_document.lambda_landing.json
+}
+
 resource "aws_lambda_function" "ingestion" {
   function_name = var.function_name
   description   = "Validates paginated World Bank indicator data before S3 landing is added."
@@ -57,6 +91,7 @@ resource "aws_lambda_function" "ingestion" {
   environment {
     variables = {
       APP_ENV                         = var.environment
+      LANDING_BUCKET                  = var.landing_bucket_name
       WORLD_BANK_API_BASE_URL         = "https://api.worldbank.org/v2"
       WORLD_BANK_COUNTRY              = "USA"
       WORLD_BANK_INDICATOR            = "SP.POP.TOTL"
@@ -70,6 +105,7 @@ resource "aws_lambda_function" "ingestion" {
 
   depends_on = [
     aws_cloudwatch_log_group.ingestion,
+    aws_iam_role_policy.lambda_landing,
     aws_iam_role_policy.lambda_logs,
   ]
 
