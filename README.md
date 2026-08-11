@@ -53,7 +53,8 @@ Phase 4 adds the transformation boundary:
 - separate processed Parquet and rejected JSON outputs;
 - immutable output paths scoped to the Glue job run ID;
 - a locally tested transformation library and reproducible Glue artifact build;
-- an idle, least-privilege Glue job definition that is never scheduled automatically.
+- an unscheduled Glue job with object access restricted to required S3 prefixes;
+- a successful live transformation of 66 observations into 66 yearly Parquet partitions.
 
 ## Local setup
 

@@ -136,13 +136,18 @@ node graph and for teams that prefer console-assisted job authoring.
 
 The Glue execution role can:
 
-- list only the landing, Glue artifact, processed, and rejected World Bank prefixes;
+- list key names in the dedicated pipeline bucket, as required by Spark's S3 output committer;
 - read only landing objects and its two deployment artifacts;
 - write only processed and rejected objects;
 - write only to the managed Glue CloudWatch log groups.
 
-It has no S3 delete permission, no access to manifests, no access to unrelated bucket prefixes,
+It has no S3 delete permission, cannot read manifest objects or unrelated prefixes,
 and no permission to start itself. The job has no schedule or trigger.
+
+Spark performs a bucket-level destination check without an `s3:prefix` condition before writing
+Parquet. The initial prefix-conditioned list policy therefore failed at runtime. `ListBucket` is
+scoped to this one pipeline bucket, while object content remains protected by prefix-restricted
+`GetObject` and `PutObject` permissions.
 
 ## Cost gate
 
@@ -164,16 +169,37 @@ The reviewed DEV plan contained nine additions, zero changes, and zero destructi
 created the idle job, execution role and two inline policies, three log groups, and two encrypted
 S3 deployment artifacts. The final drift check reported no changes.
 
-Post-deployment verification found:
+The initial deployment verification found:
 
 - Glue version 5.0 with two `G.1X` workers, no automatic retries, and a ten-minute timeout;
-- zero Glue job runs;
 - a 1,238-byte entry script and a 3,199-byte transformation library archive;
-- zero stored bytes in each Glue log group;
 - 14-day retention on each Glue log group.
 
-No Glue compute charge was triggered. The deployment used two S3 object writes and retains 4,437
-bytes of additional versioned storage, so only fraction-of-a-cent S3 usage was introduced.
+The first live run exposed a duplicate `JOB_RUN_ID` registration in the Glue argument parser and
+failed before reading source data. The entrypoint now requests only custom options while using
+the Glue-provided run ID for output isolation. A regression test protects that contract.
+
+The second run completed parsing and transformation but failed when Spark's Parquet writer made
+a bucket-level `ListBucket` request without a prefix. After explicit approval, the role received
+bucket-wide key-listing permission on this dedicated pipeline bucket. `GetObject` remains limited
+to landing and artifact objects, while `PutObject` remains limited to processed and rejected
+objects.
+
+The final run succeeded in 84 seconds. S3 and local Parquet inspection verified:
+
+- 66 processed rows and 14 columns;
+- 66 observation-year partitions covering 1960 through 2025;
+- zero nulls across indicator ID, country ISO3 code, observation year, and observation value;
+- zero duplicate business keys;
+- zero rows with schema drift;
+- no rejected records; the rejected prefix contains only an empty success marker;
+- AES-256 server-side encryption on the sampled Parquet object.
+
+The three attempts used 52, 193, and 84 execution seconds. Applying the one-minute minimum to the
+first attempt gives an estimated total Glue compute cost of approximately $0.082, plus negligible
+S3 request, versioned-storage, and CloudWatch usage. The result is intentionally split into one
+small Parquet object per year; production-scale data would need a measured partition and file
+compaction strategy to avoid a small-files problem.
 
 ## Enterprise differences
 

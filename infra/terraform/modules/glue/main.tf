@@ -60,21 +60,10 @@ data "aws_iam_policy_document" "s3_access" {
   }
 
   statement {
-    sid       = "ListPipelinePrefixes"
+    sid       = "ListPipelineBucket"
     effect    = "Allow"
     actions   = ["s3:ListBucket"]
     resources = [var.bucket_arn]
-
-    condition {
-      test     = "StringLike"
-      variable = "s3:prefix"
-      values = [
-        "landing/world_bank/*",
-        "artifacts/glue/world_bank/*",
-        "processed/world_bank/*",
-        "rejected/world_bank/*",
-      ]
-    }
   }
 
   statement {
