@@ -10,9 +10,8 @@ from uuid import uuid4
 
 from ingestion.api_client import WorldBankApiClient
 from ingestion.config import IngestionConfig
-from ingestion.landing_writer import LocalLandingWriter
-from ingestion.manifest_store import LocalManifestStore
 from ingestion.models import IngestionResult
+from ingestion.storage import LandingWriter, ManifestStore
 from ingestion.structured_logging import log_event
 
 
@@ -26,8 +25,8 @@ class IngestionRunner:
         *,
         config: IngestionConfig,
         client: WorldBankApiClient,
-        writer: LocalLandingWriter,
-        manifest_store: LocalManifestStore,
+        writer: LandingWriter,
+        manifest_store: ManifestStore,
         logger: logging.Logger,
         clock: Callable[[], datetime] = lambda: datetime.now(UTC),
     ) -> None:
@@ -80,13 +79,16 @@ class IngestionRunner:
                     run_id=run_id,
                     ingested_at=started_at,
                 )
+                page_source_bytes = len(api_page.raw_text.encode("utf-8"))
                 manifest["pages_expected"] = api_page.total_pages
                 manifest["pages_landed"] += 1
                 manifest["record_count"] += len(api_page.records)
+                manifest["source_bytes"] += page_source_bytes
                 manifest["objects"].append(
                     {
                         "page": api_page.page,
                         "record_count": len(api_page.records),
+                        "source_bytes": page_source_bytes,
                         "path": str(landed.path),
                         "sha256": landed.sha256,
                         "disposition": landed.disposition,
@@ -161,6 +163,7 @@ class IngestionRunner:
             "pages_expected": None,
             "pages_landed": 0,
             "record_count": 0,
+            "source_bytes": 0,
             "objects": [],
             "error": None,
         }
@@ -172,6 +175,7 @@ class IngestionRunner:
             status=str(manifest["status"]),
             page_count=int(manifest["pages_landed"]),
             record_count=int(manifest["record_count"]),
+            source_bytes=int(manifest.get("source_bytes", 0)),
             manifest_path=self._manifest_store.path_for(run_id),
             replayed=replayed,
         )

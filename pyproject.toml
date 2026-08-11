@@ -8,6 +8,7 @@ version = "0.1.0"
 description = "Cloud-native AWS data pipeline learning project"
 requires-python = ">=3.11"
 dependencies = [
+  "boto3>=1.40,<2",
   "requests>=2.32,<3",
 ]
 

@@ -78,8 +78,10 @@ def test_runner_writes_completed_manifest_and_skips_completed_replay(tmp_path) -
     assert first.status == "COMPLETED"
     assert first.page_count == 2
     assert first.record_count == 2
+    assert first.source_bytes == 16
     assert manifest["status"] == "COMPLETED"
     assert len(manifest["objects"]) == 2
+    assert [item["source_bytes"] for item in manifest["objects"]] == [8, 8]
     assert all(len(item["sha256"]) == 64 for item in manifest["objects"])
     assert replay.replayed is True
     assert replay_client.calls == 0

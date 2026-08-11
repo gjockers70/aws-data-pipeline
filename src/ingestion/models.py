@@ -22,7 +22,7 @@ class ApiPage:
 
 @dataclass(frozen=True)
 class LandingWriteResult:
-    path: Path
+    path: Path | str
     sha256: str
     disposition: str
 
@@ -33,5 +33,6 @@ class IngestionResult:
     status: str
     page_count: int
     record_count: int
-    manifest_path: Path
+    source_bytes: int
+    manifest_path: Path | str
     replayed: bool
