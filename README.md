@@ -65,6 +65,16 @@ Phase 5 adds a reusable data-quality gate:
 - fail-closed behavior that prevents processed output when quality fails;
 - encrypted quality results under a dedicated S3 prefix.
 
+Phase 6 begins the Redshift warehouse boundary locally:
+
+- a Redshift-ready Parquet output that retains all 14 physical columns;
+- staging, core, mart, and audit schemas;
+- country and indicator dimensions plus a population fact table;
+- idempotent `MERGE` transformations with joins and type normalization;
+- yearly, decade-summary, and latest-KPI mart views;
+- null, duplicate, schema-drift, and row-count validation SQL;
+- a Redshift Serverless cost and security gate before AWS provisioning.
+
 ## Local setup
 
 Python 3.11 is used locally to match AWS Glue 5.0. Local Spark tests also require Java 17.
@@ -102,3 +112,6 @@ Glue Visual ETL mapping, local validation, deployment boundary, and per-run cost
 
 See [`docs/PHASE_5.md`](docs/PHASE_5.md) for the quality-result contract, rule behavior,
 failure policy, S3 output, row reconciliation, and replay boundary.
+
+See [`docs/PHASE_6.md`](docs/PHASE_6.md) for the warehouse model, Parquet load boundary,
+Redshift SQL, optimization choices, replay strategy, cost comparison, and provisioning gate.

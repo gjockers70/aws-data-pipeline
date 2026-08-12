@@ -21,3 +21,21 @@ variable "glue_library_artifact_path" {
   type        = string
   default     = "../../../../build/glue/transformations.zip"
 }
+
+variable "enable_redshift" {
+  description = "Whether to provision the cost-incurring Redshift Serverless warehouse."
+  type        = bool
+  default     = false
+}
+
+variable "redshift_base_capacity" {
+  description = "Base RPU capacity for Redshift Serverless."
+  type        = number
+  default     = 4
+}
+
+variable "redshift_daily_rpu_hour_limit" {
+  description = "Daily RPU-hour limit that deactivates the workgroup on breach."
+  type        = number
+  default     = 1
+}
