@@ -9,6 +9,7 @@ CUSTOM_JOB_OPTIONS = [
     "SOURCE_PATH",
     "PROCESSED_BASE_PATH",
     "REJECTED_BASE_PATH",
+    "QUALITY_BASE_PATH",
 ]
 
 
@@ -21,8 +22,13 @@ def main() -> None:
     from awsglue.job import Job
     from awsglue.utils import getResolvedOptions
     from pyspark.context import SparkContext
+    from pyspark.storagelevel import StorageLevel
 
+    from data_quality import evaluate_data_quality
+    from data_quality.s3_writer import write_data_quality_result
+    from data_quality.world_bank import WORLD_BANK_QUALITY_CONFIG, DataQualityFailure
     from transformations.world_bank import (
+        expected_world_bank_row_count,
         read_world_bank_documents,
         transform_world_bank_documents,
         write_transform_result,
@@ -33,13 +39,34 @@ def main() -> None:
     job = Job(glue_context)
     job.init(args["JOB_NAME"], args)
 
-    documents = read_world_bank_documents(glue_context.spark_session, args["SOURCE_PATH"])
+    documents = read_world_bank_documents(
+        glue_context.spark_session,
+        args["SOURCE_PATH"],
+    ).persist(StorageLevel.MEMORY_AND_DISK)
+    expected_row_count = expected_world_bank_row_count(documents)
     result = transform_world_bank_documents(glue_context.spark_session, documents)
-    write_transform_result(
-        result,
-        run_output_path(args["PROCESSED_BASE_PATH"], args["JOB_RUN_ID"]),
-        run_output_path(args["REJECTED_BASE_PATH"], args["JOB_RUN_ID"]),
+    result.processed.persist(StorageLevel.MEMORY_AND_DISK)
+    result.rejected.persist(StorageLevel.MEMORY_AND_DISK)
+
+    quality_result = evaluate_data_quality(
+        result.processed,
+        result.rejected,
+        run_id=args["JOB_RUN_ID"],
+        config=WORLD_BANK_QUALITY_CONFIG,
+        expected_row_count=expected_row_count,
     )
+    quality_uri = f"{run_output_path(args['QUALITY_BASE_PATH'], args['JOB_RUN_ID'])}/result.json"
+    write_data_quality_result(quality_result, quality_uri)
+
+    processed_path = run_output_path(args["PROCESSED_BASE_PATH"], args["JOB_RUN_ID"])
+    rejected_path = run_output_path(args["REJECTED_BASE_PATH"], args["JOB_RUN_ID"])
+    if quality_result.status == "FAIL":
+        result.rejected.write.mode("errorifexists").json(rejected_path)
+        raise DataQualityFailure(
+            f"Data quality failed for run {args['JOB_RUN_ID']}; see {quality_uri}"
+        )
+
+    write_transform_result(result, processed_path, rejected_path)
     job.commit()
 
 

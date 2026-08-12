@@ -214,6 +214,21 @@ def read_world_bank_documents(spark: SparkSession, input_path: str) -> DataFrame
     )
 
 
+def expected_world_bank_row_count(documents: DataFrame) -> int | None:
+    """Return the consistent source total declared by World Bank page metadata."""
+    totals = documents.select(
+        F.get_json_object("raw_text", "$[0].total").cast("long").alias("source_total")
+    )
+    metrics = totals.agg(
+        F.count("source_total").alias("observed_pages"),
+        F.countDistinct("source_total").alias("distinct_totals"),
+        F.max("source_total").alias("source_total"),
+    ).first()
+    if metrics.observed_pages == 0 or metrics.distinct_totals != 1:
+        return None
+    return int(metrics.source_total)
+
+
 def transform_world_bank_documents(
     spark: SparkSession,
     documents: DataFrame,

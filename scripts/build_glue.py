@@ -9,10 +9,12 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 BUILD_DIR = PROJECT_ROOT / "build" / "glue"
 ENTRY_SOURCE = PROJECT_ROOT / "src" / "glue_jobs" / "world_bank_job.py"
-LIBRARY_SOURCES = [
-    PROJECT_ROOT / "src" / "transformations" / "__init__.py",
-    PROJECT_ROOT / "src" / "transformations" / "world_bank.py",
-]
+LIBRARY_SOURCES = sorted(
+    [
+        *(PROJECT_ROOT / "src" / "data_quality").glob("*.py"),
+        *(PROJECT_ROOT / "src" / "transformations").glob("*.py"),
+    ]
+)
 ZIP_TIMESTAMP = (1980, 1, 1, 0, 0, 0)
 
 
@@ -35,7 +37,11 @@ def build() -> tuple[Path, Path]:
     shutil.copyfile(ENTRY_SOURCE, entry_target)
     with zipfile.ZipFile(library_target, "w", compression=zipfile.ZIP_DEFLATED) as archive:
         for source in LIBRARY_SOURCES:
-            _write_deterministic_file(archive, source, Path("transformations") / source.name)
+            _write_deterministic_file(
+                archive,
+                source,
+                source.relative_to(PROJECT_ROOT / "src"),
+            )
 
     return entry_target, library_target
 
