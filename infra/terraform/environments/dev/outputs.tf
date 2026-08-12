@@ -25,3 +25,19 @@ output "glue_job_name" {
 output "glue_execution_role_arn" {
   value = module.world_bank_glue.execution_role_arn
 }
+
+output "redshift_namespace_name" {
+  value = try(module.redshift_serverless[0].namespace_name, null)
+}
+
+output "redshift_workgroup_name" {
+  value = try(module.redshift_serverless[0].workgroup_name, null)
+}
+
+output "redshift_database_name" {
+  value = try(module.redshift_serverless[0].database_name, null)
+}
+
+output "redshift_s3_read_role_arn" {
+  value = try(module.redshift_serverless[0].s3_read_role_arn, null)
+}

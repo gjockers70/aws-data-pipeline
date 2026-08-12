@@ -42,3 +42,21 @@ module "world_bank_glue" {
     Environment = "dev"
   }
 }
+
+module "redshift_serverless" {
+  count  = var.enable_redshift ? 1 : 0
+  source = "../../modules/redshift_serverless"
+
+  name_prefix          = "aws-data-pipeline-dev"
+  environment          = "dev"
+  bucket_name          = module.landing_bucket.bucket_name
+  bucket_arn           = module.landing_bucket.bucket_arn
+  base_capacity        = var.redshift_base_capacity
+  max_capacity         = var.redshift_base_capacity
+  daily_rpu_hour_limit = var.redshift_daily_rpu_hour_limit
+
+  tags = {
+    Component   = "warehouse"
+    Environment = "dev"
+  }
+}

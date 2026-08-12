@@ -10,6 +10,7 @@ CUSTOM_JOB_OPTIONS = [
     "PROCESSED_BASE_PATH",
     "REJECTED_BASE_PATH",
     "QUALITY_BASE_PATH",
+    "WAREHOUSE_BASE_PATH",
 ]
 
 
@@ -32,6 +33,7 @@ def main() -> None:
         read_world_bank_documents,
         transform_world_bank_documents,
         write_transform_result,
+        write_warehouse_load_result,
     )
 
     args = getResolvedOptions(sys.argv, CUSTOM_JOB_OPTIONS)
@@ -60,12 +62,14 @@ def main() -> None:
 
     processed_path = run_output_path(args["PROCESSED_BASE_PATH"], args["JOB_RUN_ID"])
     rejected_path = run_output_path(args["REJECTED_BASE_PATH"], args["JOB_RUN_ID"])
+    warehouse_path = run_output_path(args["WAREHOUSE_BASE_PATH"], args["JOB_RUN_ID"])
     if quality_result.status == "FAIL":
         result.rejected.write.mode("errorifexists").json(rejected_path)
         raise DataQualityFailure(
             f"Data quality failed for run {args['JOB_RUN_ID']}; see {quality_uri}"
         )
 
+    write_warehouse_load_result(result.processed, warehouse_path)
     write_transform_result(result, processed_path, rejected_path)
     job.commit()
 

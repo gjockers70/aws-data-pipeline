@@ -320,3 +320,13 @@ def write_transform_result(
     """Write analytics-ready Parquet and inspectable JSON rejection records."""
     result.processed.write.mode(mode).partitionBy("observation_year").parquet(processed_path)
     result.rejected.write.mode(mode).json(rejected_path)
+
+
+def write_warehouse_load_result(
+    processed: DataFrame,
+    warehouse_path: str,
+    *,
+    mode: str = "errorifexists",
+) -> None:
+    """Write all staging columns into Parquet files for a direct Redshift COPY."""
+    processed.write.mode(mode).parquet(warehouse_path)

@@ -87,6 +87,7 @@ data "aws_iam_policy_document" "s3_access" {
       "${var.bucket_arn}/processed/world_bank/*",
       "${var.bucket_arn}/quality/world_bank/*",
       "${var.bucket_arn}/rejected/world_bank/*",
+      "${var.bucket_arn}/warehouse/world_bank/*",
     ]
   }
 }
@@ -140,6 +141,7 @@ resource "aws_glue_job" "world_bank" {
     "--PROCESSED_BASE_PATH"              = "s3://${var.bucket_name}/processed/world_bank/"
     "--QUALITY_BASE_PATH"                = "s3://${var.bucket_name}/quality/world_bank/"
     "--REJECTED_BASE_PATH"               = "s3://${var.bucket_name}/rejected/world_bank/"
+    "--WAREHOUSE_BASE_PATH"              = "s3://${var.bucket_name}/warehouse/world_bank/"
     "--extra-py-files"                   = "s3://${var.bucket_name}/${aws_s3_object.transformation_library.key}"
     "--enable-continuous-cloudwatch-log" = "true"
     "--enable-metrics"                   = "true"
